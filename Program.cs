@@ -5,15 +5,8 @@ using UrlShortener.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add appsettings.json
-builder.Configuration.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-                     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true);
-
-// Add environment variables
-builder.Configuration.AddEnvironmentVariables();
-
 // Get connection string from configuration
-var connectionString = builder.Configuration.GetConnectionString("pgdb");
+var connectionString = builder.Configuration.GetConnectionString("POSTGRESQLCONNSTR_pgdb");
 
 // Configure DbContext
 builder.Services.AddDbContext<PgDbContextcs>(options =>
