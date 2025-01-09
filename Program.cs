@@ -1,9 +1,20 @@
-using LiteDB;
 using Microsoft.AspNetCore.WebUtilities;
-using UrlShortener.Entities;
+using Microsoft.EntityFrameworkCore;
+using UrlShortener.Repository;
+using UrlShortener.Services;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddSingleton<ILiteDatabase, LiteDatabase>(_ => new LiteDatabase("short-links.db"));
+
+// Get connection string from configuration
+var connectionString = builder.Configuration.GetConnectionString("pgdb");
+
+// Configure DbContext
+builder.Services.AddDbContext<PgDbContextcs>(options =>
+    options.UseNpgsql(connectionString));
+
+builder.Services.AddScoped<UrlShortenerRepository>();
+builder.Services.AddScoped<UrlShortenerService>();
+
 await using var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -38,26 +49,23 @@ static async Task ShortenerDelegate(HttpContext httpContext)
         return;
     }
 
-    var liteDb = httpContext.RequestServices.GetRequiredService<ILiteDatabase>();
-    var links = liteDb.GetCollection<ShortUrl>(BsonAutoId.Int32);
-    var entry = new ShortUrl(inputUri);
-    links.Insert(entry);
+    var service = httpContext.RequestServices.GetRequiredService<UrlShortenerService>();
+    var su = await service.CreateNewShortUrl(inputUri);
 
-    var urlChunk = WebEncoders.Base64UrlEncode(BitConverter.GetBytes(entry.Id));
+    var urlChunk = WebEncoders.Base64UrlEncode(BitConverter.GetBytes(su.Id));
     var result = $"{httpContext.Request.Scheme}://{httpContext.Request.Host}/{urlChunk}";
     await httpContext.Response.WriteAsJsonAsync(new { url = result });
 }
 
 static Task RedirectDelegate(HttpContext httpContext)
 {
-    var db = httpContext.RequestServices.GetRequiredService<ILiteDatabase>();
-    var collection = db.GetCollection<ShortUrl>();
+    var service = httpContext.RequestServices.GetRequiredService<UrlShortenerService>();
 
     var path = httpContext.Request.Path.ToUriComponent().Trim('/');
-    var id = BitConverter.ToInt32(WebEncoders.Base64UrlDecode(path));
-    var entry = collection.Find(p => p.Id == id).FirstOrDefault();
+    
+    var su = service.GetByPath(path).Result;
 
-    httpContext.Response.Redirect(entry?.Url ?? "/");
+    httpContext.Response.Redirect(su.Url ?? "/");
 
     return Task.CompletedTask;
 }

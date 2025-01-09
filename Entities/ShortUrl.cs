@@ -1,7 +1,11 @@
-﻿namespace UrlShortener.Entities;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 
-internal class ShortUrl(Uri url)
+namespace UrlShortener.Entities;
+[Table("urlshortener_shorturls")]
+internal class ShortUrl()
 {
-    public int Id { get; protected set; }
-    public string Url { get; protected set; } = url.ToString();
+    [Column("id")]
+    public int Id { get; set; }
+    [Column("url")]
+    public string Url { get; set; } = string.Empty;
 }
