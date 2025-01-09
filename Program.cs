@@ -6,7 +6,7 @@ using UrlShortener.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Get connection string from configuration
-var connectionString = builder.Configuration.GetConnectionString("POSTGRESQLCONNSTR_pgdb");
+var connectionString = builder.Configuration.GetConnectionString("pgdb");
 
 // Configure DbContext
 builder.Services.AddDbContext<PgDbContextcs>(options =>
