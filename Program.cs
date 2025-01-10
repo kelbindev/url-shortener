@@ -10,7 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Setup AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, and AZURE_TENANT_ID in your environment variable
 var keyVaultUrl = builder.Configuration["AZURE_KEYVAULT_URL"];
 var client = new SecretClient(vaultUri: new Uri(keyVaultUrl), credential: new DefaultAzureCredential());
-var secret = client.GetSecret("heroku-postgresql-research");
+var secret = client.GetSecret(builder.Configuration["AZURE_SECRET_NAME"]);
 
 var connectionString = secret.Value.Value;
 

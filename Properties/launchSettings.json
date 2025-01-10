@@ -8,7 +8,8 @@
         "AZURE_CLIENT_ID": "",
         "AZURE_CLIENT_SECRET": "",
         "AZURE_TENANT_ID": "",
-        "AZURE_KEYVAULT_URL": ""
+        "AZURE_KEYVAULT_URL": "",
+        "AZURE_SECRET_NAME": ""
       },
       "applicationUrl": "https://localhost:60624;http://localhost:60625"
     }
