@@ -1,3 +1,5 @@
+using Azure.Identity;
+using Azure.Security.KeyVault.Secrets;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using UrlShortener.Repository;
@@ -5,8 +7,11 @@ using UrlShortener.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Get connection string from configuration
-var connectionString = builder.Configuration.GetConnectionString("pgdb");
+var keyVaultUrl = builder.Configuration["AZURE_KEYVAULT_URL"];
+var client = new SecretClient(vaultUri: new Uri(keyVaultUrl), credential: new DefaultAzureCredential());
+var secret = client.GetSecret("heroku-postgresql-research");
+
+var connectionString = secret.Value.Value;
 
 // Configure DbContext
 builder.Services.AddDbContext<PgDbContextcs>(options =>
