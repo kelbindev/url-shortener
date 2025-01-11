@@ -116,7 +116,7 @@
                     if (!response.ok) {
                         throw new Error(response);
                     }
-                    return response.json();
+                    return response;
                 })
                 .then(data => {
                     Swal.fire({
@@ -141,7 +141,7 @@
                     if (!response.ok) {
                         throw new Error(response);
                     }
-                    return response.json();
+                    return response;
                 })
                 .then(data => {
                     Swal.fire({
