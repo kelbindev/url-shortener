@@ -43,6 +43,8 @@ app.MapGet("/", ctx =>
 app.MapPost("/url", ShortenerDelegate).RequireAuthorization();
 // API endpoint for getting authentication token
 app.MapPost("/token", GetToken);
+// API endpoint for clearing authentication token
+app.MapPost("/cleartoken", ClearToken);
 // Catch all page: redirecting shortened URL to its original address
 app.MapFallback(RedirectDelegate);
 
@@ -88,6 +90,14 @@ static Task GetToken(HttpContext httpContext)
     var token = jwtService.GetToken();
 
     SetCookie(httpContext, token);
+
+    return Task.CompletedTask;
+}
+
+static Task ClearToken(HttpContext httpContext)
+{
+    httpContext.Response.Cookies.Delete("token");
+    httpContext.Response.Cookies.Delete("refresh_token");
 
     return Task.CompletedTask;
 }
