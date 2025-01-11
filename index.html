@@ -61,18 +61,10 @@
                 .then(response => {
                     if (!response.ok) {
                         if (response.status == 401) {
-                            Swal.fire({
-                                title: 'Unauthorized',
-                                html: ' click the get token button first to get your jwt token <br> (i know it does not makes any sense, but this is only for showcasing i know how to secure my apps!!)',
-                                icon: 'error',
-                                confirmButtonText: 'Ok!'
-                            });
-                        }
-
-                        if (response.status === 400) {
-                            return response.text().then(text => {
-                                throw new Error(text);
-                            });
+                            throw new Error('Unauthorized! click the get token button first to save your jwt token <br> (this is only for showcasing i know how to secure web apps!!)');
+                            return;
+                        }else if (response.status === 400) {
+                            throw new Error('Url is invalid');
                         } else {
                             // Handle other status codes
                             throw new Error(`HTTP error! status: ${response.status}`);
@@ -87,7 +79,10 @@
                     section.innerHTML = `<a id="link" href="${url}">${url}</a>`;
                 })
                 .catch(error => {
-                    Swal.fire(error.message);
+                    Swal.fire({
+                        icon: 'error',
+                        html: error.message
+                    });
                 });;
         }
 
@@ -96,7 +91,6 @@
                 title: 'Trivia!',
                 html: ' * built with .NET 8 Minimal Api <br> * hosted in Azure <br> * config managed in azure key vault <br> * uses postgreSQL for db <br> * CI/CD with github actions <br> * Jwt Authentication for the Shorten endpoint (sliding token)',
                 icon: 'info',
-                confirmButtonText: 'Ok!'
             });
         }
 
@@ -117,8 +111,7 @@
                     Swal.fire({
                         title: 'Token generated!',
                         html: ' your token will be valid for 15 minutes, and will auto refresh if you trigger any authorization calls within 7 days',
-                        icon: 'success',
-                        confirmButtonText: 'Ok!'
+                        icon: 'success'
                     });
                 })
                 .catch(error => {
