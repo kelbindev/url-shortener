@@ -21,10 +21,15 @@
                 <div class="col-md-6">
                     <div class="card">
                         <div class="card-body">
+                            <div class="d-flex justify-content-center">
+                                <button type="button" class="btn btn-primary" onclick="getToken()">Get Token!</button>
+                            </div>
+
                             <label for="url" class="form-label">Enter your link below to retrieve its short URL</label>
                             <input type="url" class="form-control mb-3" id="url" name="url">
                             <button type="button" class="btn btn-primary" onclick="submitUrl()">Shorten</button>
-                            <p id="urlResult" class="mt-3"></p>
+                            <p id="urlResult" class="mt-3 mb-3"></p>
+
                             <div class="d-flex justify-content-between">
                                 <button type="button" class="btn btn-primary" onclick="showTrivia()">Trivia!</button>
                                 <a href="https://github.com/kelbindev/url-shortener"><i class="bi bi-github"></i></a>
@@ -46,32 +51,79 @@
             });
 
         function submitUrl() {
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', '/url', true);
-            xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+            fetch('/url', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json;charset=UTF-8'
+                },
+                body: JSON.stringify(document.getElementById('url').value)
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        if (response.status == 401) {
+                            Swal.fire({
+                                title: 'Unauthorized',
+                                html: ' click the get token button first to get your jwt token <br> (i know it does not makes any sense, but this is only for showcasing i know how to secure my apps!!)',
+                                icon: 'error',
+                                confirmButtonText: 'Ok!'
+                            });
+                        }
 
-            xhr.onreadystatechange = function () {
-                if (xhr.readyState === 4) {
-                    if (xhr.status === 200) {
-                        const url = JSON.parse(xhr.responseText).url;
-                        const section = document.getElementById('urlResult');
-                        section.innerHTML = `<a id="link" href="${url}">${url}</a>`;
-                    } else {
-                        Swal.fire(xhr.responseText);
+                        if (response.status === 400) {
+                            return response.text().then(text => {
+                                throw new Error(text);
+                            });
+                        } else {
+                            // Handle other status codes
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+
                     }
-                }
-            };
-
-            xhr.send(JSON.stringify(document.getElementById('url').value));
+                    return response.json();
+                })
+                .then(data => {
+                    const url = data.url;
+                    const section = document.getElementById('urlResult');
+                    section.innerHTML = `<a id="link" href="${url}">${url}</a>`;
+                })
+                .catch(error => {
+                    Swal.fire(error.message);
+                });;
         }
 
         function showTrivia() {
             Swal.fire({
                 title: 'Trivia!',
-                html: ' * built with .NET 8 Minimal Api <br> * hosted in Azure <br> * config managed in azure key vault <br> * uses postgreSQL for db <br> * CI/CD with github actions',
+                html: ' * built with .NET 8 Minimal Api <br> * hosted in Azure <br> * config managed in azure key vault <br> * uses postgreSQL for db <br> * CI/CD with github actions <br> * Jwt Authentication for the Shorten endpoint (sliding token)',
                 icon: 'info',
-                confirmButtonText: 'Cool!'
+                confirmButtonText: 'Ok!'
             });
+        }
+
+        function getToken() {
+            fetch('/token', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json;charset=UTF-8'
+                }
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(response);
+                    }
+                    return response;
+                })
+                .then(data => {
+                    Swal.fire({
+                        title: 'Token generated!',
+                        html: ' your token will be valid for 15 minutes, and will auto refresh if you trigger any authorization calls within 7 days',
+                        icon: 'success',
+                        confirmButtonText: 'Ok!'
+                    });
+                })
+                .catch(error => {
+                    Swal.fire(error.message);
+                });
         }
     </script>
 </body>

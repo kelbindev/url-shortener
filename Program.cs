@@ -1,8 +1,8 @@
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.EntityFrameworkCore;
-using UrlShortener.Repository;
+using UrlShortener.Entities;
+using UrlShortener.Middleware;
 using UrlShortener.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,16 +10,15 @@ var builder = WebApplication.CreateBuilder(args);
 // Setup AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, and AZURE_TENANT_ID in your environment variable
 var keyVaultUrl = builder.Configuration["AZURE_KEYVAULT_URL"];
 var client = new SecretClient(vaultUri: new Uri(keyVaultUrl), credential: new DefaultAzureCredential());
-var secret = client.GetSecret(builder.Configuration["AZURE_SECRET_NAME"]);
+var secretConnectionString = client.GetSecret(builder.Configuration["AZURE_SECRET_NAME_CONNECTIONSTRING"]);
 
-var connectionString = secret.Value.Value;
+var connectionString = secretConnectionString.Value.Value;
 
-// Configure DbContext
-builder.Services.AddDbContext<PgDbContextcs>(options =>
-    options.UseNpgsql(connectionString));
+//add jwt auth
+builder.Services.AddJwtConfiguration(builder.Configuration);
 
-builder.Services.AddScoped<UrlShortenerRepository>();
-builder.Services.AddScoped<UrlShortenerService>();
+//add services and repo
+builder.Services.AddServiceAndRepositoryConfiguration(connectionString);
 
 await using var app = builder.Build();
 
@@ -28,6 +27,11 @@ if (app.Environment.IsDevelopment())
     app.UseDeveloperExceptionPage();
 }
 
+app.UseMiddleware<JwtMiddleware>();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
 // Home page: A form for submitting a URL
 app.MapGet("/", ctx =>
                 {
@@ -35,9 +39,10 @@ app.MapGet("/", ctx =>
                     return ctx.Response.SendFileAsync("index.html");
                 });
 
-// API endpoint for shortening a URL and save it to a local database
-app.MapPost("/url", ShortenerDelegate);
-
+// API endpoint for shortening a URL and save it to a database
+app.MapPost("/url", ShortenerDelegate).RequireAuthorization();
+// API endpoint for getting authentication token
+app.MapPost("/token", GetToken);
 // Catch all page: redirecting shortened URL to its original address
 app.MapFallback(RedirectDelegate);
 
@@ -74,4 +79,29 @@ static Task RedirectDelegate(HttpContext httpContext)
     httpContext.Response.Redirect(su.Url ?? "/");
 
     return Task.CompletedTask;
+}
+
+static Task GetToken(HttpContext httpContext)
+{
+    var jwtService = httpContext.RequestServices.GetRequiredService<JwtService>();
+
+    var token = jwtService.GetToken();
+
+    SetCookie(httpContext, token);
+
+    return Task.CompletedTask;
+}
+
+static void SetCookie(HttpContext httpContext, JwtTokenRefreshToken token)
+{
+    var cookieOptions = new CookieOptions
+    {
+        HttpOnly = true,
+        Secure = false,
+        SameSite = SameSiteMode.Lax,
+        Expires = DateTime.UtcNow.AddDays(7)
+    };
+
+    httpContext.Response.Cookies.Append("token", token.Token.Token, cookieOptions);
+    httpContext.Response.Cookies.Append("refresh_token", token.RefreshToken.Token, cookieOptions);
 }
