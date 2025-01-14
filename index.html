@@ -25,19 +25,33 @@
                             <input type="url" class="form-control mb-3" id="url" name="url">
                             <div class="d-flex justify-content-between">
                                 <div>
-                                    <button type="button" class="btn btn-primary btn-sm" onclick="getToken()">Get Token</button>
-                                    <button type="button" class="btn btn-primary btn-sm" onclick="clearToken()">Clear Token</button>
+                                    <button type="button" class="btn btn-primary btn-sm" onclick="getToken()" id="btnGetToken">
+                                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="display:none"></span>
+                                        Get Token
+                                    </button>
+                                    <button type="button" class="btn btn-primary btn-sm" onclick="clearToken()" id="btnClearToken">
+                                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="display:none"></span>
+                                        Clear Token
+                                    </button>
                                 </div>
-                                <button type="button" class="btn btn-primary btn-sm" onclick="submitUrl()">Shorten</button>
+                                <button type="button" class="btn btn-primary btn-sm" onclick="submitUrl()" id="btnShorten">
+                                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="display:none"></span>
+                                    Shorten
+                                </button>
                             </div>
-
 
                             <p id="urlResult" class="mt-3 mb-3"></p>
 
                             <div class="d-flex justify-content-between">
                                 <div>
-                                    <button type="button" class="btn btn-info btn-sm" onclick="showReadme()">Read Me!</button>
-                                    <button type="button" class="btn btn-info btn-sm" onclick="randomFacts()">Useless Facts!</button>
+                                    <button type="button" class="btn btn-info btn-sm" onclick="showReadme()">
+                                        Read Me!
+                                    </button>
+
+                                    <button type="button" class="btn btn-info btn-sm" onclick="randomFacts()" id="btnRandomFacts">
+                                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="display:none"></span>
+                                        Useless Facts!
+                                    </button>
                                 </div>
                                 <div>
                                     <a href="https://drive.google.com/file/d/1S3hQUG2_NFHDipn8F2cfBDaY1nqPQqsv/view?usp=drive_link" target="_blank" style="margin-top:auto"><i class="bi bi-file-person"></i></a>
@@ -52,6 +66,22 @@
         </main>
     </div>
     <script>
+        const showLoading = (controlId) => {
+            const button = document.getElementById(controlId);
+            const spinner = button.querySelector('.spinner-border');
+
+            spinner.style.display = 'inline-block';
+            button.disabled = true;
+        }
+
+        const hideLoading = (controlId) => {
+            const button = document.getElementById(controlId);
+            const spinner = button.querySelector('.spinner-border');
+
+            spinner.style.display = 'none';
+            button.disabled = false;
+        }
+
         document
             .getElementById('url')
             .addEventListener('keyup', function (event) {
@@ -61,7 +91,9 @@
                 }
             });
 
-        function submitUrl() {
+        const submitUrl = () => {
+            showLoading('btnShorten')
+
             fetch('/url', {
                 method: 'POST',
                 headers: {
@@ -70,6 +102,7 @@
                 body: JSON.stringify(document.getElementById('url').value)
             })
                 .then(response => {
+                    hideLoading('btnShorten')
                     if (!response.ok) {
                         if (response.status == 401) {
                             throw new Error('Unauthorized! click the get token button first to save your jwt token <br> (this is only for showcasing i know how to secure web apps!!)');
@@ -97,15 +130,23 @@
                 });;
         }
 
-        function showReadme() {
+        const showReadme = () => {
             Swal.fire({
                 title: 'Trivia!',
-                html: ' * built with .NET 8 Minimal Api <br> * hosted in Azure <br> * config managed in azure key vault <br> * uses postgreSQL for db <br> * CI/CD with github actions <br> * Jwt Authentication for the Shorten endpoint (sliding token)',
+                html:
+                    ' * built with .NET 8 Minimal Api <br> ' +
+                    ' * hosted in Azure <br> ' +
+                    ' * config managed in azure key vault <br>' +
+                    ' * uses postgreSQL for db <br>' +
+                    ' * CI/CD with github actions<br>' +
+                    ' * Jwt Authentication for the Shorten endpoint(sliding token & http only cookie)',
                 icon: 'info',
             });
         }
 
-        function getToken() {
+        const getToken = () => {
+            showLoading('btnGetToken')
+
             fetch('/token', {
                 method: 'POST',
                 headers: {
@@ -113,6 +154,8 @@
                 }
             })
                 .then(response => {
+                    hideLoading('btnGetToken')
+
                     if (!response.ok) {
                         throw new Error(response);
                     }
@@ -130,7 +173,9 @@
                 });
         }
 
-        function clearToken() {
+        const clearToken = () => {
+            showLoading('btnClearToken')
+
             fetch('/cleartoken', {
                 method: 'POST',
                 headers: {
@@ -138,6 +183,8 @@
                 }
             })
                 .then(response => {
+                    hideLoading('btnClearToken')
+
                     if (!response.ok) {
                         throw new Error(response);
                     }
@@ -155,9 +202,13 @@
                 });
         }
 
-        function randomFacts() {
+        const randomFacts = () => {
+            showLoading('btnRandomFacts')
+
             const url = "https://uselessfacts.jsph.pl/api/v2/facts/random";
             fetch(url).then(response => {
+                hideLoading('btnRandomFacts')
+
                 if (!response.ok) {
                     throw new Error(response);
                 }
