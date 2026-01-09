@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: urlshortener-db
+    environment:
+      POSTGRES_DB: ${DB_NAME:-urlshortener}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: urlshortener-app
+    ports:
+      - "8080:8080"
+    environment: 
+      # ASP.NET Core Configuration
+      - ASPNETCORE_URLS=http://+:8080
+      - ASPNETCORE_ENVIRONMENT=${ASPNET_ENVIRONMENT:-Development}
+      
+      # Database Connection
+      - ConnectionStrings__pgdb=Host=postgres;Port=5432;Database=${DB_NAME:-urlshortener};Username=${DB_USER:-postgres};Password=${DB_PASSWORD:-postgres}
+      
+      # Azure Key Vault Configuration
+      - AZURE_KEYVAULT_URL=${AZURE_KEYVAULT_URL:-https://your-keyvault-name.vault.azure.net/}
+      - AZURE_SECRET_NAME_CONNECTIONSTRING=${AZURE_SECRET_NAME:-ConnectionString}
+      - AZURE_CLIENT_ID=${AZURE_CLIENT_ID:-00000000-0000-0000-0000-000000000000}
+      - AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET:-dummy-client-secret}
+      - AZURE_TENANT_ID=${AZURE_TENANT_ID:-00000000-0000-0000-0000-000000000000}
+      
+      # JWT Configuration
+      - Jwt__Key=${JWT_KEY:-dummy-jwt-secret-key-that-should-be-at-least-32-characters-long}
+      - Jwt__Issuer=${JWT_ISSUER:-https://localhost:8080}
+      - Jwt__Audience=${JWT_AUDIENCE:-https://localhost:8080}
+      - Jwt__ExpiryMinutes=${JWT_EXPIRY_MINUTES:-60}
+      
+      # Logging
+      - Logging__LogLevel__Default=${LOG_LEVEL:-Information}
+      - Logging__LogLevel__Microsoft=${LOG_LEVEL_MS:-Warning}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - app-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  app-network:
+    driver: bridge

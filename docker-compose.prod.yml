@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  app:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: urlshortener-app-prod
+    ports:
+      - "8080:8080"
+    environment:
+      # ASP.NET Core Configuration
+      - ASPNETCORE_URLS=http://+:8080
+      - ASPNETCORE_ENVIRONMENT=Production
+      
+      # Database Connection (use external managed database in production)
+      - ConnectionStrings__pgdb=${DATABASE_CONNECTION_STRING}
+      
+      # Azure Key Vault Configuration
+      - AZURE_KEYVAULT_URL=${AZURE_KEYVAULT_URL}
+      - AZURE_SECRET_NAME_CONNECTIONSTRING=${AZURE_SECRET_NAME}
+      - AZURE_CLIENT_ID=${AZURE_CLIENT_ID}
+      - AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET}
+      - AZURE_TENANT_ID=${AZURE_TENANT_ID}
+      
+      # JWT Configuration
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=${JWT_ISSUER}
+      - Jwt__Audience=${JWT_AUDIENCE}
+      - Jwt__ExpiryMinutes=${JWT_EXPIRY_MINUTES}
+    networks:
+      - app-network
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  app-network:
+    driver: bridge
