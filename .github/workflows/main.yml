@@ -44,8 +44,8 @@ jobs:
               -e AZURE_CLIENT_ID='${{ vars.AZURE_CLIENT_ID }}' \
               -e AZURE_CLIENT_SECRET='${{ vars.AZURE_CLIENT_SECRET }}' \
               -e AZURE_TENANT_ID='${{ vars.AZURE_TENANT_ID }}' \
-              -e Jwt__Key='${{ vars.JWT_SECRET }}' \
-              -e Jwt__Issuer='${{ vars.JWT_ISSUER }}' \
-              -e Jwt__Audience='${{ vars.JWT_AUDIENCE }}' \
+              -e JWT_SECRET='${{ vars.JWT_SECRET }}' \
+              -e JWT_ISSUER='${{ vars.JWT_ISSUER }}' \
+              -e JWT_AUDIENCE='${{ vars.JWT_AUDIENCE }}' \
               url-shortener:latest
           "
