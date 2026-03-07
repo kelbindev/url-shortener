@@ -3,10 +3,10 @@ ARG VERSION=8.0-alpine
 FROM mcr.microsoft.com/dotnet/sdk:$VERSION AS build
 WORKDIR /app
 
-COPY ./src/*.csproj ./
+COPY ./*.csproj ./
 RUN dotnet restore
 
-COPY ./src/*.* .
+COPY . .
 
 RUN dotnet publish -c Release -o /out --no-restore
 
