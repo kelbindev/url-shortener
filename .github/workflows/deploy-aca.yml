@@ -1,0 +1,80 @@
+name: Build and Deploy to Azure Container Apps
+
+# Required GitHub Variables (Settings → Secrets and variables → Actions → Variables):
+# - ACR_LOGIN_SERVER       : ACR login server (e.g. kelbinacr01.azurecr.io)
+# - ACR_USERNAME           : ACR admin username
+# - ACR_PASSWORD           : ACR admin password
+# - AZURE_RESOURCE_GROUP   : Resource group containing the Container App
+# - AZURE_CONTAINER_APP    : Name of the Azure Container App
+#
+# Required GitHub Secrets (Settings → Secrets and variables → Actions → Secrets):
+# - AZURE_CREDENTIALS  : Azure service principal JSON (see README for format)
+#                        Required fields: clientId, clientSecret, subscriptionId, tenantId
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  IMAGE_NAME: url-shortener
+  AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+  AZURE_CONTAINER_APP: ${{ vars.AZURE_CONTAINER_APP }}
+
+jobs:
+  build-and-push:
+    name: Build and Push to ACR
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to Azure Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ vars.ACR_LOGIN_SERVER }}
+          username: ${{ vars.ACR_USERNAME }}
+          password: ${{ vars.ACR_PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ vars.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:latest
+            ${{ vars.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+  deploy:
+    name: Deploy to Azure Container Apps
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    permissions:
+      contents: read
+
+    steps:
+      - name: Log in to Azure
+        uses: azure/login@v2
+        with:
+          # AZURE_CREDENTIALS must be a JSON object with the following fields:
+          # {
+          #   "clientId": "<service-principal-app-id>",
+          #   "clientSecret": "<service-principal-password>",
+          #   "subscriptionId": "<subscription-id>",
+          #   "tenantId": "<tenant-id>"
+          # }
+          # Create with: az ad sp create-for-rbac --name "<name>" --role contributor \
+          #   --scopes /subscriptions/<sub-id>/resourceGroups/<rg> --sdk-auth
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Update Azure Container App image
+        run: |
+          az containerapp update \
+            --name "${{ env.AZURE_CONTAINER_APP }}" \
+            --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" \
+            --image "${{ vars.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
