@@ -8,11 +8,20 @@ using UrlShortener.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Setup AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, and AZURE_TENANT_ID in your environment variable
-var keyVaultUrl = builder.Configuration["AZURE_KEYVAULT_URL"];
-var client = new SecretClient(vaultUri: new Uri(keyVaultUrl), credential: new DefaultAzureCredential());
-var secretConnectionString = client.GetSecret(builder.Configuration["AZURE_SECRET_NAME_CONNECTIONSTRING"]);
+var connectionString = string.Empty;
 
-var connectionString = secretConnectionString.Value.Value;
+var keyVaultUrl = builder.Configuration["AZURE_KEYVAULT_URL"];
+
+if (!string.IsNullOrWhiteSpace(keyVaultUrl))
+{
+    var client = new SecretClient(vaultUri: new Uri(keyVaultUrl), credential: new DefaultAzureCredential());
+    var secretConnectionString = client.GetSecret(builder.Configuration["AZURE_SECRET_NAME_CONNECTIONSTRING"]);
+    connectionString = secretConnectionString.Value.Value;
+}
+else {
+    connectionString = builder.Configuration.GetConnectionString("pgdb") 
+        ?? throw new InvalidOperationException("Connection string 'pgdb' not found."); 
+}
 
 //add jwt auth
 builder.Services.AddJwtConfiguration(builder.Configuration);
