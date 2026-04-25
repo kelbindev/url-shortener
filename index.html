@@ -3,32 +3,62 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>URL Shortener</title>
+    <title>URL Shortener - Kelbin's Portfolio</title>
     <link rel="icon" href="data:;base64,iVBORw0KGgo=" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         :root {
-            --primary-color: #6366f1;
-            --primary-hover: #4f46e5;
-            --secondary-color: #8b5cf6;
-            --success-color: #10b981;
-            --info-color: #06b6d4;
-            --background: #f8fafc;
-            --card-background: #ffffff;
-            --text-primary: #1e293b;
-            --text-secondary: #64748b;
-            --border-color: #e2e8f0;
-            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-            --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+            --steam-blue: #1b2838;
+            --steam-dark-blue: #171a21;
+            --steam-darkest: #0e1419;
+            --steam-light-blue: #2a475e;
+            --steam-highlight: #66c0f4;
+            --steam-accent: #5ba3d0;
+            --steam-text: #c7d5e0;
+            --steam-text-dark: #8f98a0;
+            --steam-border: #3d4450;
+            --steam-hover: #417a9b;
+            --glow-blue: rgba(102, 192, 244, 0.3);
+            --glow-blue-strong: rgba(102, 192, 244, 0.6);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         body {
-            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            background:
+                linear-gradient(135deg, rgba(10, 14, 39, 0.98) 0%, rgba(26, 31, 58, 0.98) 25%, rgba(27, 40, 56, 0.98) 50%, rgba(15, 20, 25, 0.98) 100%);
+            background-color: var(--steam-darkest);
+            color: var(--steam-text);
+            font-family: "Segoe UI", "Motiva Sans", Arial, Helvetica, sans-serif;
             min-height: 100vh;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            padding: 2rem 0;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background:
+                radial-gradient(circle at 20% 30%, rgba(102, 192, 244, 0.04) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(91, 163, 208, 0.04) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Page layout */
+        .page-wrapper {
+            position: relative;
+            z-index: 1;
+            padding: 2.5rem 1rem;
         }
 
         .main-container {
@@ -36,234 +66,294 @@
             margin: 0 auto;
         }
 
-        header h1 {
-            color: white;
+        .page-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .page-header h1 {
+            color: var(--steam-text);
             font-weight: 700;
-            font-size: 2.5rem;
+            font-size: 2.2rem;
             margin-bottom: 0.5rem;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-shadow: 0 0 20px var(--glow-blue);
         }
 
-        header p {
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 1.1rem;
+        .page-header h1 i {
+            color: var(--steam-highlight);
         }
 
+        .page-header p {
+            color: var(--steam-text-dark);
+            font-size: 1rem;
+        }
+
+        /* Card */
         .main-card {
-            background: var(--card-background);
-            border-radius: 1rem;
-            box-shadow: var(--shadow-lg);
-            border: none;
-            padding: 2.5rem;
+            background: rgba(42, 71, 94, 0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--steam-border);
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(102, 192, 244, 0.05);
         }
 
+        /* Form */
         .form-label {
+            display: block;
             font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 0.75rem;
-            font-size: 0.95rem;
+            color: var(--steam-text);
+            margin-bottom: 0.65rem;
+            font-size: 0.9rem;
+            letter-spacing: 0.3px;
         }
 
         .url-input {
-            border: 2px solid var(--border-color);
-            border-radius: 0.75rem;
-            padding: 0.875rem 1rem;
-            font-size: 1rem;
+            width: 100%;
+            background: rgba(23, 26, 33, 0.8);
+            border: 1px solid var(--steam-border);
+            border-radius: 6px;
+            padding: 0.75rem 1rem;
+            font-size: 0.95rem;
+            color: var(--steam-text);
+            font-family: inherit;
             transition: all 0.2s ease;
+            outline: none;
+            margin-bottom: 0.85rem;
+        }
+
+        .url-input::placeholder {
+            color: var(--steam-text-dark);
         }
 
         .url-input:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+            border-color: var(--steam-highlight);
+            box-shadow: 0 0 0 3px var(--glow-blue);
         }
 
+        /* Buttons */
         .btn-modern {
-            border-radius: 0.5rem;
-            padding: 0.625rem 1.25rem;
+            border-radius: 4px;
+            padding: 0.55rem 1.1rem;
             font-weight: 600;
+            font-family: inherit;
             border: none;
+            cursor: pointer;
             transition: all 0.2s ease;
             display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.4rem;
+            font-size: 0.88rem;
+            letter-spacing: 0.3px;
         }
 
-        .btn-primary-modern {
-            background: var(--primary-color);
-            color: white;
-        }
-
-        .btn-primary-modern:hover {
-            background: var(--primary-hover);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(99, 102, 241, 0.3);
+        .btn-modern:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
         }
 
         .btn-shorten {
-            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
-            color: white;
-            padding: 0.75rem 2rem;
-            font-size: 1.05rem;
+            background: linear-gradient(135deg, var(--steam-accent) 0%, var(--steam-highlight) 100%);
+            color: #0e1419;
+            font-weight: 700;
+            padding: 0.65rem 1.75rem;
+            font-size: 0.95rem;
         }
 
-        .btn-shorten:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(30, 58, 138, 0.4);
+        .btn-shorten:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px var(--glow-blue);
+        }
+
+        .btn-primary-modern {
+            background: var(--steam-light-blue);
+            color: var(--steam-text);
+            border: 1px solid var(--steam-border);
+        }
+
+        .btn-primary-modern:hover:not(:disabled) {
+            background: var(--steam-hover);
+            color: white;
+            transform: translateY(-1px);
         }
 
         .btn-secondary-modern {
-            background: var(--text-secondary);
-            color: white;
+            background: rgba(61, 68, 80, 0.6);
+            color: var(--steam-text-dark);
+            border: 1px solid var(--steam-border);
         }
 
-        .btn-secondary-modern:hover {
-            background: var(--text-primary);
+        .btn-secondary-modern:hover:not(:disabled) {
+            background: rgba(61, 68, 80, 0.9);
+            color: var(--steam-text);
             transform: translateY(-1px);
         }
 
         .btn-info-modern {
             background: transparent;
-            color: var(--info-color);
-            border: 2px solid var(--info-color);
+            color: var(--steam-accent);
+            border: 1px solid var(--steam-accent);
         }
 
-        .btn-info-modern:hover {
-            background: var(--info-color);
-            color: white;
+        .btn-info-modern:hover:not(:disabled) {
+            background: var(--steam-accent);
+            color: var(--steam-darkest);
             transform: translateY(-1px);
         }
 
+        /* Spinner */
+        .spinner-border {
+            display: inline-block;
+            width: 0.85rem;
+            height: 0.85rem;
+            border: 2px solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.65s linear infinite;
+            vertical-align: -0.1em;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Result area */
         .result-container {
-            background: linear-gradient(135deg, #1e3a8a15 0%, #1e40af15 100%);
-            border-radius: 0.75rem;
-            padding: 1.25rem;
-            margin-top: 1.5rem;
-            min-height: 60px;
+            background: rgba(23, 26, 33, 0.5);
+            border: 1px dashed var(--steam-border);
+            border-radius: 6px;
+            padding: 1rem 1.25rem;
+            margin-top: 1.25rem;
+            min-height: 54px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border: 2px dashed var(--border-color);
-        }
-
-        .result-container a {
-            color: var(--primary-color);
-            font-weight: 600;
-            text-decoration: none;
-            word-break: break-all;
-            font-size: 1.05rem;
-        }
-
-        .result-container a:hover {
-            text-decoration: underline;
         }
 
         .result-container:empty::before {
             content: 'Your shortened URL will appear here';
-            color: var(--text-secondary);
+            color: var(--steam-text-dark);
             font-style: italic;
+            font-size: 0.9rem;
         }
 
+        .result-container a {
+            color: var(--steam-highlight);
+            font-weight: 600;
+            text-decoration: none;
+            word-break: break-all;
+            font-size: 1rem;
+            text-shadow: 0 0 8px var(--glow-blue);
+        }
+
+        .result-container a:hover {
+            color: white;
+        }
+
+        /* Divider */
         .divider {
             height: 1px;
-            background: var(--border-color);
-            margin: 2rem 0;
+            background: var(--steam-border);
+            margin: 1.75rem 0;
         }
 
-        .button-group {
-            display: flex;
-            gap: 0.75rem;
-            flex-wrap: wrap;
-        }
-
+        /* Layout helpers */
         .section-actions {
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 1rem;
+            gap: 0.75rem;
+            margin-bottom: 0.85rem;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+        }
+
+        .button-group-center {
+            display: flex;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
         @media (max-width: 576px) {
-            .main-card {
-                padding: 1.5rem;
-            }
-
-            header h1 {
-                font-size: 2rem;
-            }
-
-            .section-actions {
-                flex-direction: column;
-                width: 100%;
-            }
-
-            .button-group {
-                width: 100%;
-                justify-content: center;
-            }
-
-            .btn-shorten {
-                width: 100%;
-                justify-content: center;
-            }
+            .main-card { padding: 1.25rem; }
+            .page-header h1 { font-size: 1.75rem; }
+            .section-actions { flex-direction: column; width: 100%; }
+            .button-group { width: 100%; justify-content: center; }
+            .btn-shorten { width: 100%; justify-content: center; }
+            .steam-nav { gap: 16px; }
         }
     </style>
 </head>
 
 <body>
-    <div class="container main-container">
-        <header class="text-center mb-4">
-            <h1><i class="bi bi-link-45deg"></i> URL Shortener</h1>
-            <p>Transform long URLs into short, shareable links</p>
-        </header>
-        <main>
-            <div class="main-card">
-                <label for="url" class="form-label">Enter your URL</label>
-                <input type="url" class="form-control url-input mb-3" id="url" name="url" placeholder="https://example.com/your-very-long-url">
-                
-                <div class="section-actions mb-3">
-                    <div class="button-group">
-                        <button type="button" class="btn btn-modern btn-primary-modern" onclick="getToken()" id="btnGetToken">
-                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="display:none"></span>
-                            <i class="bi bi-shield-lock"></i>
-                            Get Token
-                        </button>
-                        <button type="button" class="btn btn-modern btn-secondary-modern" onclick="clearToken()" id="btnClearToken">
-                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="display:none"></span>
-                            <i class="bi bi-x-circle"></i>
-                            Clear Token
+    <div class="page-wrapper">
+        <div class="main-container">
+            <div class="page-header">
+                <h1><i class="bi bi-link-45deg"></i> URL Shortener</h1>
+                <p>Transform long URLs into short, shareable links</p>
+            </div>
+            <main>
+                <div class="main-card">
+                    <label for="url" class="form-label">Enter your URL</label>
+                    <input type="url" class="url-input" id="url" name="url" placeholder="https://example.com/your-very-long-url">
+
+                    <div class="section-actions">
+                        <div class="button-group">
+                            <button type="button" class="btn-modern btn-primary-modern" onclick="getToken()" id="btnGetToken">
+                                <span class="spinner-border" role="status" aria-hidden="true" style="display:none"></span>
+                                <i class="bi bi-shield-lock"></i>
+                                Get Token
+                            </button>
+                            <button type="button" class="btn-modern btn-secondary-modern" onclick="clearToken()" id="btnClearToken">
+                                <span class="spinner-border" role="status" aria-hidden="true" style="display:none"></span>
+                                <i class="bi bi-x-circle"></i>
+                                Clear Token
+                            </button>
+                        </div>
+                        <button type="button" class="btn-modern btn-shorten" onclick="submitUrl()" id="btnShorten">
+                            <span class="spinner-border" role="status" aria-hidden="true" style="display:none"></span>
+                            <i class="bi bi-scissors"></i>
+                            Shorten URL
                         </button>
                     </div>
-                    <button type="button" class="btn btn-modern btn-shorten" onclick="submitUrl()" id="btnShorten">
-                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="display:none"></span>
-                        <i class="bi bi-scissors"></i>
-                        Shorten URL
-                    </button>
+
+                    <div id="urlResult" class="result-container"></div>
+
+                    <div class="divider"></div>
+
+                    <div class="button-group-center">
+                        <button type="button" class="btn-modern btn-info-modern" onclick="showReadme()">
+                            <i class="bi bi-info-circle"></i>
+                            About
+                        </button>
+                        <button type="button" class="btn-modern btn-info-modern" onclick="randomFacts()" id="btnRandomFacts">
+                            <span class="spinner-border" role="status" aria-hidden="true" style="display:none"></span>
+                            <i class="bi bi-lightbulb"></i>
+                            Random Facts
+                        </button>
+                    </div>
                 </div>
-
-                <div id="urlResult" class="result-container"></div>
-
-                <div class="divider"></div>
-
-                <div class="button-group justify-content-center">
-                    <button type="button" class="btn btn-modern btn-info-modern" onclick="showReadme()">
-                        <i class="bi bi-info-circle"></i>
-                        About
-                    </button>
-                    <button type="button" class="btn btn-modern btn-info-modern" onclick="randomFacts()" id="btnRandomFacts">
-                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="display:none"></span>
-                        <i class="bi bi-lightbulb"></i>
-                        Random Facts
-                    </button>
-                </div>
-            </div>
-        </main>
+            </main>
+        </div>
     </div>
+
     <script>
+        const Alert = Swal.mixin({
+            background: 'rgba(23, 26, 33, 0.97)',
+            color: '#c7d5e0',
+        });
+
         const showLoading = (controlId) => {
             const button = document.getElementById(controlId);
             const spinner = button.querySelector('.spinner-border');
-
             spinner.style.display = 'inline-block';
             button.disabled = true;
         }
@@ -271,7 +361,6 @@
         const hideLoading = (controlId) => {
             const button = document.getElementById(controlId);
             const spinner = button.querySelector('.spinner-border');
-
             spinner.style.display = 'none';
             button.disabled = false;
         }
@@ -290,9 +379,7 @@
 
             fetch('/url', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json;charset=UTF-8'
-                },
+                headers: { 'Content-Type': 'application/json;charset=UTF-8' },
                 body: JSON.stringify(document.getElementById('url').value)
             })
                 .then(response => {
@@ -300,14 +387,11 @@
                     if (!response.ok) {
                         if (response.status == 401) {
                             throw new Error('Unauthorized! click the get token button first to save your jwt token <br> (this is only for showcasing i know how to secure web apps!!)');
-                            return;
                         } else if (response.status === 400) {
                             throw new Error('Url is invalid');
                         } else {
-                            // Handle other status codes
                             throw new Error(`HTTP error! status: ${response.status}`);
                         }
-
                     }
                     return response.json();
                 })
@@ -317,15 +401,12 @@
                     section.innerHTML = `<a id="link" href="${url}">${url}</a>`;
                 })
                 .catch(error => {
-                    Swal.fire({
-                        icon: 'error',
-                        html: error.message
-                    });
-                });;
+                    Alert.fire({ icon: 'error', html: error.message });
+                });
         }
 
         const showReadme = () => {
-            Swal.fire({
+            Alert.fire({
                 title: 'Trivia!',
                 html:
                     ' * built with .NET 8 Minimal Api <br> ' +
@@ -343,27 +424,22 @@
 
             fetch('/token', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json;charset=UTF-8'
-                }
+                headers: { 'Content-Type': 'application/json;charset=UTF-8' }
             })
                 .then(response => {
                     hideLoading('btnGetToken')
-
-                    if (!response.ok) {
-                        throw new Error(response);
-                    }
+                    if (!response.ok) throw new Error(response);
                     return response;
                 })
-                .then(data => {
-                    Swal.fire({
+                .then(() => {
+                    Alert.fire({
                         title: 'Token generated!',
-                        html: ' your token will be valid for 15 minutes, and will auto refresh if you trigger any authorization calls within 7 days',
+                        html: 'Your token will be valid for 15 minutes, and will auto refresh if you trigger any authorization calls within 7 days',
                         icon: 'success'
                     });
                 })
                 .catch(error => {
-                    Swal.fire(error.message);
+                    Alert.fire({ icon: 'error', text: error.message });
                 });
         }
 
@@ -372,51 +448,43 @@
 
             fetch('/cleartoken', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json;charset=UTF-8'
-                }
+                headers: { 'Content-Type': 'application/json;charset=UTF-8' }
             })
                 .then(response => {
                     hideLoading('btnClearToken')
-
-                    if (!response.ok) {
-                        throw new Error(response);
-                    }
+                    if (!response.ok) throw new Error(response);
                     return response;
                 })
-                .then(data => {
-                    Swal.fire({
+                .then(() => {
+                    Alert.fire({
                         title: 'Token cleared!',
-                        html: 'please re-generate the token to shorten any url',
+                        html: 'Please re-generate the token to shorten any URL',
                         icon: 'success'
                     });
                 })
                 .catch(error => {
-                    Swal.fire(error.message);
+                    Alert.fire({ icon: 'error', text: error.message });
                 });
         }
 
         const randomFacts = () => {
             showLoading('btnRandomFacts')
 
-            const url = "https://uselessfacts.jsph.pl/api/v2/facts/random";
-            fetch(url).then(response => {
-                hideLoading('btnRandomFacts')
-
-                if (!response.ok) {
-                    throw new Error(response);
-                }
-                return response.json();
-            })
+            fetch("https://uselessfacts.jsph.pl/api/v2/facts/random")
+                .then(response => {
+                    hideLoading('btnRandomFacts')
+                    if (!response.ok) throw new Error(response);
+                    return response.json();
+                })
                 .then(data => {
-                    Swal.fire({
-                        title: 'random useless facts!',
+                    Alert.fire({
+                        title: 'Random useless fact!',
                         text: data.text,
                         icon: 'info'
                     });
                 })
                 .catch(error => {
-                    Swal.fire(error.message);
+                    Alert.fire({ icon: 'error', text: error.message });
                 });
         }
     </script>
