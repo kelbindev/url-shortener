@@ -1,0 +1,195 @@
+@page "/"
+@rendermode InteractiveServer
+@inject IJSRuntime JS
+
+<PageTitle>URL Shortener - Kelbin's Portfolio</PageTitle>
+
+<div class="page-wrapper">
+    <div class="main-container">
+        <div class="page-header">
+            <h1><i class="bi bi-link-45deg"></i> URL Shortener</h1>
+            <p>Transform long URLs into short, shareable links</p>
+        </div>
+        <main>
+            <div class="main-card">
+                <label for="url" class="form-label">Enter your URL</label>
+                <input type="url"
+                       class="url-input"
+                       id="url"
+                       @bind="urlInput"
+                       @bind:event="oninput"
+                       placeholder="https://example.com/your-very-long-url"
+                       @onkeyup="OnKeyUp" />
+
+                <div class="section-actions">
+                    <div class="button-group">
+                        <button type="button" class="btn-modern btn-primary-modern" @onclick="GetToken" disabled="@isGettingToken">
+                            @if (isGettingToken)
+                            {
+                                <span class="spinner-border" role="status" aria-hidden="true"></span>
+                            }
+                            else
+                            {
+                                <i class="bi bi-shield-lock"></i>
+                            }
+                            Get Token
+                        </button>
+                        <button type="button" class="btn-modern btn-secondary-modern" @onclick="ClearToken" disabled="@isClearingToken">
+                            @if (isClearingToken)
+                            {
+                                <span class="spinner-border" role="status" aria-hidden="true"></span>
+                            }
+                            else
+                            {
+                                <i class="bi bi-x-circle"></i>
+                            }
+                            Clear Token
+                        </button>
+                    </div>
+                    <button type="button" class="btn-modern btn-shorten" @onclick="ShortenUrl" disabled="@isShortening">
+                        @if (isShortening)
+                        {
+                            <span class="spinner-border" role="status" aria-hidden="true"></span>
+                        }
+                        else
+                        {
+                            <i class="bi bi-scissors"></i>
+                        }
+                        Shorten URL
+                    </button>
+                </div>
+
+                <div class="result-container">
+                    @if (!string.IsNullOrEmpty(resultUrl))
+                    {
+                        <a href="@resultUrl">@resultUrl</a>
+                    }
+                    else
+                    {
+                        <span class="result-placeholder">Your shortened URL will appear here</span>
+                    }
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="button-group-center">
+                    <button type="button" class="btn-modern btn-info-modern" @onclick="ShowAbout">
+                        <i class="bi bi-info-circle"></i>
+                        About
+                    </button>
+                    <button type="button" class="btn-modern btn-info-modern" @onclick="RandomFacts" disabled="@isLoadingFacts">
+                        @if (isLoadingFacts)
+                        {
+                            <span class="spinner-border" role="status" aria-hidden="true"></span>
+                        }
+                        else
+                        {
+                            <i class="bi bi-lightbulb"></i>
+                        }
+                        Random Facts
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+@code {
+    private string urlInput = string.Empty;
+    private string resultUrl = string.Empty;
+    private bool isShortening;
+    private bool isGettingToken;
+    private bool isClearingToken;
+    private bool isLoadingFacts;
+
+    private async Task OnKeyUp(KeyboardEventArgs e)
+    {
+        if (e.Code == "Enter")
+            await ShortenUrl();
+    }
+
+    private async Task ShortenUrl()
+    {
+        isShortening = true;
+        resultUrl = string.Empty;
+        try
+        {
+            resultUrl = await JS.InvokeAsync<string>("urlShortener.shorten", urlInput);
+        }
+        catch (JSException ex)
+        {
+            await JS.InvokeVoidAsync("urlShortener.showError", ex.Message);
+        }
+        finally
+        {
+            isShortening = false;
+        }
+    }
+
+    private async Task GetToken()
+    {
+        isGettingToken = true;
+        try
+        {
+            await JS.InvokeVoidAsync("urlShortener.getToken");
+            await JS.InvokeVoidAsync("urlShortener.showSuccess", "Token generated!",
+                "Your token will be valid for 15 minutes, and will auto refresh if you trigger any authorization calls within 7 days");
+        }
+        catch (JSException ex)
+        {
+            await JS.InvokeVoidAsync("urlShortener.showError", ex.Message);
+        }
+        finally
+        {
+            isGettingToken = false;
+        }
+    }
+
+    private async Task ClearToken()
+    {
+        isClearingToken = true;
+        try
+        {
+            await JS.InvokeVoidAsync("urlShortener.clearToken");
+            await JS.InvokeVoidAsync("urlShortener.showSuccess", "Token cleared!",
+                "Please re-generate the token to shorten any URL");
+        }
+        catch (JSException ex)
+        {
+            await JS.InvokeVoidAsync("urlShortener.showError", ex.Message);
+        }
+        finally
+        {
+            isClearingToken = false;
+        }
+    }
+
+    private async Task RandomFacts()
+    {
+        isLoadingFacts = true;
+        try
+        {
+            var fact = await JS.InvokeAsync<string>("urlShortener.randomFact");
+            await JS.InvokeVoidAsync("urlShortener.showInfo", "Random useless fact!", fact);
+        }
+        catch (JSException ex)
+        {
+            await JS.InvokeVoidAsync("urlShortener.showError", ex.Message);
+        }
+        finally
+        {
+            isLoadingFacts = false;
+        }
+    }
+
+    private async Task ShowAbout()
+    {
+        await JS.InvokeVoidAsync("urlShortener.showInfo", "Trivia!",
+            "* built with .NET 10 Blazor Server<br>" +
+            "* hosted in Azure Container Apps<br>" +
+            "* config managed in Azure Key Vault<br>" +
+            "* uses PostgreSQL for db<br>" +
+            "* CI/CD with GitHub Actions<br>" +
+            "* JWT Authentication for the Shorten endpoint (sliding token & http only cookie)");
+    }
+}

@@ -8,7 +8,7 @@ env:
   CONTAINER_APP_NAME: url-shortener-aca
   CONTAINER_APP_RESOURCE_GROUP_NAME: url-shortener-rg
   CONTAINER_REGISTRY_LOGIN_SERVER: urlshorteneracr01.azurecr.io
-  DOTNET_CORE_VERSION: 8.0.x
+  DOTNET_CORE_VERSION: 10.0.x
   PROJECT_NAME_FOR_DOCKER: urlshortener
 jobs:
   build:
@@ -19,7 +19,6 @@ jobs:
     - name: Setup .NET SDK
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-quality: preview
         dotnet-version: ${{ env.DOTNET_CORE_VERSION }}
     - name: Log in to container registry
       uses: azure/docker-login@v2

@@ -12,9 +12,11 @@
         "AZURE_KEYVAULT_URL": "",
         "AZURE_SECRET_NAME_CONNECTIONSTRING": "",
 
-        "JWT_ISSUER": "",
-        "JWT_AUDIENCE": "",
-        "JWT_SECRET": ""
+        "JWT_ISSUER": "kelbin",
+        "JWT_AUDIENCE": "kelbin",
+        "JWT_SECRET": "2b58e3ff-8c2f-4f3c-87fb-a6096ca2bf2b",
+
+        "ConnectionStrings__pgdb": "Host=ep-morning-fire-a12n4y67-pooler.ap-southeast-1.aws.neon.tech; Database=urlshortener; Username=neondb_owner; Password=npg_lvjF5GxIEhw4; SSL Mode=VerifyFull; Channel Binding=Require;"  
       },
       "applicationUrl": "https://localhost:60624;http://localhost:60625"
     }

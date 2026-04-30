@@ -1,15 +1,14 @@
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 using Microsoft.AspNetCore.WebUtilities;
+using UrlShortener.Components;
 using UrlShortener.Entities;
 using UrlShortener.Middleware;
 using UrlShortener.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Setup AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, and AZURE_TENANT_ID in your environment variable
 var connectionString = string.Empty;
-
 var keyVaultUrl = builder.Configuration["AZURE_KEYVAULT_URL"];
 
 if (!string.IsNullOrWhiteSpace(keyVaultUrl))
@@ -18,51 +17,66 @@ if (!string.IsNullOrWhiteSpace(keyVaultUrl))
     var secretConnectionString = client.GetSecret(builder.Configuration["AZURE_SECRET_NAME_CONNECTIONSTRING"]);
     connectionString = secretConnectionString.Value.Value;
 }
-else {
-    connectionString = builder.Configuration.GetConnectionString("pgdb") 
-        ?? throw new InvalidOperationException("Connection string 'pgdb' not found."); 
+else
+{
+    connectionString = builder.Configuration.GetConnectionString("pgdb")
+        ?? throw new InvalidOperationException("Connection string 'pgdb' not found.");
 }
 
-//add jwt auth
 builder.Services.AddJwtConfiguration(builder.Configuration);
-
-//add services and repo
 builder.Services.AddServiceAndRepositoryConfiguration(connectionString);
+
+builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents();
 
 await using var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
-{
     app.UseDeveloperExceptionPage();
-}
+
+app.UseStaticFiles();
+
+// Resolve short URL codes before Blazor routing picks up the path.
+// Filters out static assets (dots), Blazor internals (underscore prefix), and nested paths (slash).
+app.Use(async (context, next) =>
+{
+    var path = context.Request.Path.Value?.Trim('/');
+    if (!string.IsNullOrEmpty(path) && !path.Contains('/') && !path.Contains('.') && !path.StartsWith('_'))
+    {
+        try
+        {
+            var service = context.RequestServices.GetRequiredService<UrlShortenerService>();
+            var su = await service.GetByPath(path);
+            if (!string.IsNullOrEmpty(su.Url))
+            {
+                context.Response.Redirect(su.Url);
+                return;
+            }
+        }
+        catch { }
+    }
+    await next();
+});
 
 app.UseMiddleware<JwtMiddleware>();
-
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseAntiforgery();
 
-// Home page: A form for submitting a URL
-app.MapGet("/", ctx =>
-                {
-                    ctx.Response.ContentType = "text/html";
-                    return ctx.Response.SendFileAsync("index.html");
-                });
-
-// API endpoint for shortening a URL and save it to a database
-app.MapPost("/url", ShortenerDelegate).RequireAuthorization();
-// API endpoint for getting authentication token
+// Token management endpoints — must remain as HTTP endpoints to set HttpOnly cookies.
 app.MapPost("/token", GetToken);
-// API endpoint for clearing authentication token
 app.MapPost("/cleartoken", ClearToken);
-// Catch all page: redirecting shortened URL to its original address
-app.MapFallback(RedirectDelegate);
+app.MapPost("/url", ShortenerDelegate).RequireAuthorization();
+
+app.MapRazorComponents<App>()
+    .AddInteractiveServerRenderMode();
 
 await app.RunAsync();
 return;
 
 static async Task ShortenerDelegate(HttpContext httpContext)
 {
-    var request = await httpContext.Request.ReadFromJsonAsync<string>() ;
+    var request = await httpContext.Request.ReadFromJsonAsync<string>();
 
     if (!Uri.TryCreate(request, UriKind.Absolute, out var inputUri))
     {
@@ -79,27 +93,11 @@ static async Task ShortenerDelegate(HttpContext httpContext)
     await httpContext.Response.WriteAsJsonAsync(new { url = result });
 }
 
-static Task RedirectDelegate(HttpContext httpContext)
-{
-    var service = httpContext.RequestServices.GetRequiredService<UrlShortenerService>();
-
-    var path = httpContext.Request.Path.ToUriComponent().Trim('/');
-    
-    var su = service.GetByPath(path).Result;
-
-    httpContext.Response.Redirect(su.Url ?? "/");
-
-    return Task.CompletedTask;
-}
-
 static Task GetToken(HttpContext httpContext)
 {
     var jwtService = httpContext.RequestServices.GetRequiredService<JwtService>();
-
     var token = jwtService.GetToken();
-
     SetCookie(httpContext, token);
-
     return Task.CompletedTask;
 }
 
@@ -107,7 +105,6 @@ static Task ClearToken(HttpContext httpContext)
 {
     httpContext.Response.Cookies.Delete("token");
     httpContext.Response.Cookies.Delete("refresh_token");
-
     return Task.CompletedTask;
 }
 
